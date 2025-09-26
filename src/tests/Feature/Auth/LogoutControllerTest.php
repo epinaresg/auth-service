@@ -4,29 +4,25 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Auth;
 
-use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
-use Tymon\JWTAuth\Facades\JWTAuth;
-use PHPUnit\Framework\Attributes\Test;
+use App\Adapters\Contracts\AuthAdapterInterface;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 
 #[Group('auth')]
 class LogoutControllerTest extends TestCase
 {
-    use RefreshDatabase;
-
     // -------------------------------
     // Helpers
     // -------------------------------
-    private function createAndLoginUser(string $email = 'test@example.com', string $password = 'secret123'): string
+    private function mockAuthToken(): string
     {
-        $user = User::factory()->create([
-            'email' => $email,
-            'password' => bcrypt($password),
-        ]);
+        $token = bin2hex(random_bytes(32));
+        $mock = $this->createMock(AuthAdapterInterface::class);
+        $mock->method('authenticate')->willReturn($token);
+        $this->app->instance(AuthAdapterInterface::class, $mock);
 
-        return JWTAuth::fromUser($user);
+        return $token;
     }
 
     // -------------------------------
@@ -56,7 +52,7 @@ class LogoutControllerTest extends TestCase
     #[Test]
     public function logout_returns_no_content_for_authenticated_user(): void
     {
-        $token = $this->createAndLoginUser();
+        $token = $this->mockAuthToken();
 
         $response = $this->postJson(
             route('auth.logout'),
@@ -76,7 +72,7 @@ class LogoutControllerTest extends TestCase
     #[Test]
     public function logout_invalidates_the_token(): void
     {
-        $token = $this->createAndLoginUser();
+        $token = $this->mockAuthToken();
 
         // Logout
         $this->postJson(

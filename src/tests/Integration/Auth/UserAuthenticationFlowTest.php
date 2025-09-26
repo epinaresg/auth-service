@@ -6,9 +6,8 @@ namespace Tests\Integration\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Hash;
-use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 
 class UserAuthenticationFlowTest extends TestCase
 {
@@ -20,7 +19,7 @@ class UserAuthenticationFlowTest extends TestCase
         // Create user
         $user = User::factory()->create([
             'email' => 'test@example.com',
-            'password' => Hash::make('secret123'),
+            'password' => bcrypt('secret123'),
         ]);
 
         // Login
@@ -35,7 +34,7 @@ class UserAuthenticationFlowTest extends TestCase
         $meResponse = $this->getJson(route('auth.me'), [
             'Authorization' => 'Bearer ' . $token,
         ]);
-        $meResponse->assertStatus(200)->assertJson(['id' => $user->id, 'email' => $user->email]);
+        $meResponse->assertStatus(200)->assertJson(['data' => ['id' => $user->id, 'email' => $user->email]]);
 
         // Refresh token
         $refreshResponse = $this->postJson(

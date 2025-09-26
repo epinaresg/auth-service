@@ -6,7 +6,6 @@ namespace App\Traits;
 
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 trait ApiResponse
 {
@@ -19,6 +18,7 @@ trait ApiResponse
             [
                 'success' => true,
                 'data' => $data,
+                'guard' => config('auth.defaults.guard'),
             ],
             $status,
         );
@@ -29,6 +29,7 @@ trait ApiResponse
      */
     protected function error(string $message, int $status = Response::HTTP_BAD_REQUEST): JsonResponse
     {
+        $status = $status >= 100 && $status < 600 ? $status : Response::HTTP_INTERNAL_SERVER_ERROR;
         return response()->json(
             [
                 'success' => false,
@@ -49,13 +50,13 @@ trait ApiResponse
     /**
      * Return a JSON response with a JWT token.
      */
-    protected function respondWithToken(string $token): JsonResponse
+    protected function respondWithToken(string $token, int $expiresIn): JsonResponse
     {
         return response()->json([
             'success' => true,
             'access_token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => JWTAuth::factory()->getTTL() * 60, // seconds
+            'expires_in' => $expiresIn, // seconds
         ]);
     }
 }

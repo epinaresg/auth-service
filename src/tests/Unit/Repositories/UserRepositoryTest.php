@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Repositories;
+namespace Tests\Unit\Repositories;
 
 use App\Models\User;
 use App\Repositories\Eloquent\UserRepository;

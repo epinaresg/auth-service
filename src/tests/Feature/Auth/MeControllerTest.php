@@ -4,26 +4,24 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Auth;
 
+use App\Adapters\Contracts\AuthAdapterInterface;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tymon\JWTAuth\Facades\JWTAuth;
-use Tests\TestCase;
-use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 
 #[Group('auth')]
 class MeControllerTest extends TestCase
 {
-    use RefreshDatabase;
-
-    private function createAndLoginUser(string $email = 'test@example.com', string $password = 'secret123'): string
+    // -------------------------------
+    // Helpers
+    // -------------------------------
+    private function issueAuthToken(User $user, string $password = 'password'): string
     {
-        $user = User::factory()->create([
-            'email' => $email,
-            'password' => bcrypt($password),
-        ]);
+        /** @var AuthAdapterInterface $auth */
+        $auth = $this->app->make(AuthAdapterInterface::class);
 
-        return JWTAuth::fromUser($user);
+        return $auth->authenticate($user->email, $password);
     }
 
     // -------------------------------
@@ -33,10 +31,7 @@ class MeControllerTest extends TestCase
     public function me_route_exists(): void
     {
         $response = $this->getJson(route('auth.me'));
-        $this->assertTrue(
-            in_array($response->status(), [200, 401]),
-            'Me route does not exist or returns unexpected status.'
-        );
+        $this->assertTrue(in_array($response->status(), [200, 401]), 'Me route does not exist or returns unexpected status.');
     }
 
     // -------------------------------
@@ -55,23 +50,22 @@ class MeControllerTest extends TestCase
     #[Test]
     public function me_returns_user_info_for_authenticated_user(): void
     {
-        $token = $this->createAndLoginUser();
+        $user = User::factory()->create([
+            'password' => bcrypt('password'),
+        ]);
+
+        $token = $this->issueAuthToken($user);
 
         $response = $this->getJson(route('auth.me'), [
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ]);
 
         $response
             ->assertStatus(200)
             ->assertJsonStructure([
-                'id',
-                'name',
-                'email'
+                'data' => ['id', 'name', 'email'],
             ])
-            ->assertJsonMissing([
-                'password',
-                'remember_token'
-            ]);
+            ->assertJsonMissing(['password', 'remember_token']);
     }
 
     // -------------------------------
@@ -80,15 +74,16 @@ class MeControllerTest extends TestCase
     #[Test]
     public function me_does_not_return_sensitive_fields(): void
     {
-        $token = $this->createAndLoginUser();
+        $user = User::factory()->create([
+            'password' => bcrypt('password'),
+        ]);
+
+        $token = $this->issueAuthToken($user);
 
         $response = $this->getJson(route('auth.me'), [
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ]);
 
-        $response->assertJsonMissing([
-            'password',
-            'remember_token'
-        ]);
+        $response->assertJsonMissing(['password', 'remember_token']);
     }
 }

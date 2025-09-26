@@ -5,17 +5,14 @@ declare(strict_types=1);
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Tests\TestCase;
-use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 
 #[Group('auth')]
 class LoginControllerTest extends TestCase
 {
-    use RefreshDatabase;
-
     // -------------------------------
     // Helpers
     // -------------------------------

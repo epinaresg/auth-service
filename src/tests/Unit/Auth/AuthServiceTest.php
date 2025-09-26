@@ -2,44 +2,35 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Services;
+namespace Tests\Unit\Auth;
 
-use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Adapters\Contracts\AuthAdapterInterface;
 use App\Services\AuthService;
-use Illuminate\Contracts\Auth\Factory as AuthFactory;
-use Illuminate\Contracts\Auth\Guard;
 use Mockery;
+use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 class AuthServiceTest extends TestCase
 {
     private $authService;
-    private $userRepositoryMock;
-    private $authFactoryMock;
-    private $guardMock;
+    private $authAdapter;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->userRepositoryMock = Mockery::mock(UserRepositoryInterface::class);
-        $this->authFactoryMock = Mockery::mock(AuthFactory::class);
-        $this->guardMock = Mockery::mock(Guard::class);
-
-        $this->authFactoryMock->shouldReceive('guard')->andReturn($this->guardMock);
-
-        $this->authService = new AuthService($this->userRepositoryMock, $this->authFactoryMock);
+        /** @var MockInterface&AuthAdapterInterface */
+        $this->authAdapter = Mockery::mock(AuthAdapterInterface::class);
+        $this->authService = new AuthService($this->authAdapter);
     }
 
     #[Test]
     public function authenticate_returns_token_for_valid_credentials(): void
     {
-        $credentials = ['email' => 'test@example.com', 'password' => 'secret123'];
+        $this->authAdapter->shouldReceive('authenticate')->once()->with('test@example.com', 'secret123')->andReturn('faketoken');
 
-        $this->guardMock->shouldReceive('attempt')->once()->with($credentials)->andReturn('faketoken');
-
-        $token = $this->authService->authenticate($credentials);
+        $token = $this->authService->authenticate('test@example.com', 'secret123');
 
         $this->assertEquals('faketoken', $token);
     }
@@ -47,11 +38,9 @@ class AuthServiceTest extends TestCase
     #[Test]
     public function authenticate_returns_null_for_invalid_credentials(): void
     {
-        $credentials = ['email' => 'test@example.com', 'password' => 'wrongpassword'];
+        $this->authAdapter->shouldReceive('authenticate')->once()->with('test@example.com', 'wrongpassword')->andReturn(null);
 
-        $this->guardMock->shouldReceive('attempt')->once()->with($credentials)->andReturn(false);
-
-        $token = $this->authService->authenticate($credentials);
+        $token = $this->authService->authenticate('test@example.com', 'wrongpassword');
 
         $this->assertNull($token);
     }

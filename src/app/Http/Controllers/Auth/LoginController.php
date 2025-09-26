@@ -4,25 +4,29 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Auth;
 
+use App\Exceptions\Auth\UnauthorizedException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Services\AuthService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
 
 class LoginController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(private AuthService $authService) {}
-
-    public function __invoke(LoginRequest $request):JsonResponse
+    public function __construct(private AuthService $authService)
     {
-        $token = $this->authService->authenticate($request->validated());
+    }
+
+    public function __invoke(LoginRequest $request): JsonResponse
+    {
+        ['email' => $email, 'password' => $password] = $request->validated();
+        $token = $this->authService->authenticate($email, $password);
         if (!$token) {
-            return $this->error('Unauthorized', Response::HTTP_UNAUTHORIZED);
+            throw new UnauthorizedException();
         }
-        return $this->respondWithToken($token);
+
+        return $this->respondWithToken($token, $this->authService->getTTLInSeconds());
     }
 }

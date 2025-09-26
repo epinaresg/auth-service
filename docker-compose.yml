@@ -48,15 +48,6 @@ services:
     networks:
       - laravel
 
-  mailhog:
-    image: mailhog/mailhog
-    container_name: laravel_mailhog
-    ports:
-      - "1025:1025" # SMTP
-      - "8025:8025" # UI
-    networks:
-      - laravel
-
 volumes:
   dbdata:
 

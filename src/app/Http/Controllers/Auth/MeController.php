@@ -5,13 +5,21 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\AuthService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 class MeController extends Controller
 {
+    use ApiResponse;
+
+    public function __construct(private AuthService $authService)
+    {
+    }
+
     public function __invoke(): JsonResponse
     {
-        return response()->json(JWTAuth::user());
+        return $this->success($this->authService->me());
+        ;
     }
 }
