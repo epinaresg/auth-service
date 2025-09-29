@@ -3,7 +3,10 @@
     "name": "laravel/laravel",
     "type": "project",
     "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "keywords": [
+        "laravel",
+        "framework"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.2",
@@ -61,7 +64,6 @@
         ],
         "cs-check": "php-cs-fixer fix --config=php-cs-fixer.dist.php --dry-run --diff",
         "cs-fix": "php-cs-fixer fix --config=php-cs-fixer.dist.php",
-
         "rector-dry": "rector process --dry-run",
         "rector-fix": "rector process"
     },
